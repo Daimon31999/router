@@ -10,10 +10,16 @@ import { isRedirect } from './redirects'
 import { type AnyRouter, type RegisteredRouter } from './router'
 import { Transitioner } from './Transitioner'
 import type { ResolveRelativePath, ToOptions } from './link'
-import type { AnyRoute, ReactNode, StaticDataRouteOption } from './route'
+import type {
+  AnyRoute,
+  ReactNode,
+  ResolveAllParamsFromParent,
+  ResolveFullSearchSchema,
+  ResolveLoaderData,
+  StaticDataRouteOption,
+} from './route'
 import type {
   AllParams,
-  FullSearchSchema,
   ParseRoute,
   RouteById,
   RouteByPath,
@@ -23,7 +29,6 @@ import type {
 import type {
   ControlledPromise,
   DeepPartial,
-  Expand,
   NoInfer,
   StrictOrFrom,
 } from './utils'
@@ -31,9 +36,10 @@ import type {
 export const matchContext = React.createContext<string | undefined>(undefined)
 
 export interface RouteMatch<
+  TParentRoute extends AnyRoute,
   TRouteId,
-  TAllParams,
-  TFullSearchSchema,
+  TParams,
+  TSearchSchema,
   TLoaderData,
   TAllContext,
   TRouteContext,
@@ -42,7 +48,7 @@ export interface RouteMatch<
   id: string
   routeId: TRouteId
   pathname: string
-  params: TAllParams
+  params: ResolveAllParamsFromParent<TParentRoute, TParams>
   status: 'pending' | 'success' | 'error' | 'redirected' | 'notFound'
   isFetching: false | 'beforeLoad' | 'loader'
   error: unknown
@@ -54,7 +60,7 @@ export interface RouteMatch<
   loaderData?: TLoaderData
   routeContext: TRouteContext
   context: TAllContext
-  search: TFullSearchSchema
+  search: ResolveFullSearchSchema<TParentRoute, TSearchSchema>
   fetchCount: number
   abortController: AbortController
   cause: 'preload' | 'enter' | 'stay'
@@ -74,28 +80,27 @@ export type MakeRouteMatch<
   TRouteTree extends AnyRoute = RegisteredRouter['routeTree'],
   TRouteId = ParseRoute<TRouteTree>['id'],
   TReturnIntersection extends boolean = false,
-  TTypes extends AnyRoute['types'] = RouteById<TRouteTree, TRouteId>['types'],
+  TRoute extends AnyRoute = RouteById<TRouteTree, TRouteId>,
+  TTypes extends AnyRoute['types'] = TRoute['types'],
   TAllParams = TReturnIntersection extends false
     ? TTypes['allParams']
     : Partial<AllParams<TRouteTree>>,
-  TFullSearchSchema = TReturnIntersection extends false
-    ? TTypes['fullSearchSchema']
-    : Partial<FullSearchSchema<TRouteTree>>,
   TLoaderData = TTypes['loaderData'],
   TAllContext = TTypes['allContext'],
   TRouteContext = TTypes['routeContext'],
   TLoaderDeps = TTypes['loaderDeps'],
 > = RouteMatch<
+  TRoute['parentRoute'],
   TRouteId,
   TAllParams,
-  TFullSearchSchema,
+  TRoute['types']['searchSchema'],
   TLoaderData,
   TAllContext,
   TRouteContext,
   TLoaderDeps
 >
 
-export type AnyRouteMatch = RouteMatch<any, any, any, any, any, any, any>
+export type AnyRouteMatch = RouteMatch<any, any, any, any, any, any, any, any>
 
 export function Matches() {
   const router = useRouter()

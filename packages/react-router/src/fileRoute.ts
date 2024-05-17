@@ -9,22 +9,14 @@ import type {
   AnyContext,
   AnyPathParams,
   AnyRoute,
+  AnyRouteTypes,
   AnySearchSchema,
   FileBaseRouteOptions,
-  ResolveAllContext,
-  ResolveAllParamsFromParent,
-  ResolveFullSearchSchema,
-  ResolveFullSearchSchemaInput,
-  ResolveLoaderData,
-  ResolveRouteContext,
-  ResolveSearchSchemaUsed,
-  RootRouteId,
   Route,
   RouteConstraints,
   RouteContext,
   RouteLoaderFn,
-  SearchSchemaInput,
-  TrimPathLeft,
+  RouteTypes,
   UpdatableRouteOptions,
 } from './route'
 import type { Assign, IsAny } from './utils'
@@ -52,6 +44,39 @@ export function createFileRoute<
   }).createRoute
 }
 
+export interface FileRouteOptions<
+  TRouteTypes extends AnyRouteTypes,
+  TParentRoute extends AnyRoute,
+  TId extends RouteConstraints['TId'],
+  TPath extends RouteConstraints['TPath'],
+  TSearchSchemaInput,
+  TSearchSchema,
+  TParams,
+  TRouteContextReturn,
+  TRouterContext,
+  TLoaderDeps extends Record<string, any>,
+  TLoaderDataReturn,
+> extends FileBaseRouteOptions<
+      TRouteTypes,
+      TParentRoute,
+      TPath,
+      TSearchSchemaInput,
+      TSearchSchema,
+      TParams,
+      TRouteContextReturn,
+      TRouterContext,
+      TLoaderDeps,
+      TLoaderDataReturn
+    >,
+    UpdatableRouteOptions<
+      TRouteTypes,
+      TParentRoute,
+      TId,
+      TParams,
+      TSearchSchema,
+      TLoaderDeps
+    > {}
+
 /** 
   @deprecated It's no longer recommended to use the `FileRoute` class directly.
   Instead, use `createFileRoute('/path/to/file')(options)` to create a file route.
@@ -76,50 +101,33 @@ export class FileRoute<
   createRoute = <
     TSearchSchemaInput = {},
     TSearchSchema = {},
-    TSearchSchemaUsed = ResolveSearchSchemaUsed<
-      TSearchSchemaInput,
-      TSearchSchema
-    >,
-    TFullSearchSchemaInput = ResolveFullSearchSchemaInput<
-      TParentRoute,
-      TSearchSchemaUsed
-    >,
-    TFullSearchSchema = ResolveFullSearchSchema<TParentRoute, TSearchSchema>,
     TParams = Record<ParsePathParams<TPath>, string>,
-    TAllParams = ResolveAllParamsFromParent<TParentRoute, TParams>,
     TRouteContextReturn = RouteContext,
-    TRouteContext = ResolveRouteContext<TRouteContextReturn>,
-    TAllContext = ResolveAllContext<TParentRoute, TRouteContext>,
     TRouterContext = AnyContext,
     TLoaderDeps extends Record<string, any> = {},
     TLoaderDataReturn = unknown,
-    TLoaderData = ResolveLoaderData<TLoaderDataReturn>,
     TChildren = unknown,
   >(
-    options?: FileBaseRouteOptions<
+    options?: FileRouteOptions<
+      RouteTypes<
+        TParentRoute,
+        TParams,
+        TSearchSchemaInput,
+        TSearchSchema,
+        TRouteContextReturn,
+        TLoaderDataReturn
+      >,
       TParentRoute,
+      TId,
       TPath,
       TSearchSchemaInput,
       TSearchSchema,
-      TFullSearchSchema,
       TParams,
-      TAllParams,
       TRouteContextReturn,
-      TRouteContext,
       TRouterContext,
-      TAllContext,
       TLoaderDeps,
       TLoaderDataReturn
-    > &
-      UpdatableRouteOptions<
-        TId,
-        TAllParams,
-        TFullSearchSchema,
-        TLoaderData,
-        TAllContext,
-        TRouteContext,
-        TLoaderDeps
-      >,
+    >,
   ): Route<
     TParentRoute,
     TPath,
@@ -128,18 +136,19 @@ export class FileRoute<
     TId,
     TSearchSchemaInput,
     TSearchSchema,
-    TSearchSchemaUsed,
-    TFullSearchSchemaInput,
-    TFullSearchSchema,
     TParams,
-    TAllParams,
     TRouteContextReturn,
-    TRouteContext,
-    TAllContext,
     TRouterContext,
     TLoaderDeps,
     TLoaderDataReturn,
-    TLoaderData,
+    RouteTypes<
+      TParentRoute,
+      TParams,
+      TSearchSchemaInput,
+      TSearchSchema,
+      TRouteContextReturn,
+      TLoaderDataReturn
+    >,
     TChildren
   > => {
     warning(
@@ -186,12 +195,11 @@ export function FileRouteLoader<
 
 export type LazyRouteOptions = Pick<
   UpdatableRouteOptions<
+    AnyRouteTypes,
+    AnyRoute,
     string,
     AnyPathParams,
     AnySearchSchema,
-    {},
-    AnyContext,
-    AnyContext,
     {}
   >,
   'component' | 'errorComponent' | 'pendingComponent' | 'notFoundComponent'

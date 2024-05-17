@@ -24,7 +24,7 @@ export function useSearch<
   return useMatch({
     ...opts,
     select: (match: MakeRouteMatch<TRouteTree, TFrom>) => {
-      return opts.select ? opts.select(match.search) : match.search
+      return opts.select ? opts.select(match.search as any) : match.search
     },
-  })
+  }) as any
 }
